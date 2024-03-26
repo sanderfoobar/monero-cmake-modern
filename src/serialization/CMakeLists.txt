@@ -26,30 +26,48 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(serialization_sources
-  json_object.cpp)
+file(GLOB SER_SOURCES *.cpp *.c *.cc)
+set(SER_HEADERS
+    binary_archive.h
+    binary_utils.h
+    container.h
+    containers.h
+    crypto.h
+    debug_archive.h
+    difficulty_type.h
+    json_archive.h
+    json_object.h
+    pair.h
+    serialization.h
+    string.h
+    tuple.h
+    variant.h)
 
-set(serialization_headers)
+add_library(serialization)
+target_sources(serialization
+    PRIVATE
+        ${SER_SOURCES}
+    )
 
-monero_find_all_headers(serialization_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
-
-monero_private_headers(serialization
-  ${serialization_private_headers})
-monero_add_library(serialization
-  ${serialization_sources}
-  ${serialization_headers}
-  ${serialization_private_headers})
 target_link_libraries(serialization
   LINK_PRIVATE
     cryptonote_basic
     cryptonote_core
     cryptonote_protocol
     epee
-    ${Boost_CHRONO_LIBRARY}
-    ${Boost_REGEX_LIBRARY}
-    ${Boost_SYSTEM_LIBRARY}
-    ${Boost_THREAD_LIBRARY}
-    ${EXTRA_LIBRARIES})
-add_dependencies(serialization
-  version)
+    Boost::chrono
+    Boost::regex
+    Boost::system
+    Boost::thread)
 
+add_dependencies(serialization version)
+
+target_include_directories(serialization
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        )
+
+monero_install_library(serialization
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/serialization/"
+        HEADERS "${SER_HEADERS}")

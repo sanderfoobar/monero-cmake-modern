@@ -26,19 +26,13 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(simplewallet_sources
-  simplewallet.cpp)
+file(GLOB SW_SOURCES
+    *.cpp
+    *.c
+    *.cc
+    *.h)
 
-set(simplewallet_headers)
-
-monero_find_all_headers(simplewallet_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
-
-monero_private_headers(simplewallet
-  ${simplewallet_private_headers})
-monero_add_executable(simplewallet
-  ${simplewallet_sources}
-  ${simplewallet_headers}
-  ${simplewallet_private_headers})
+add_executable(simplewallet ${SW_SOURCES})
 target_link_libraries(simplewallet
   PRIVATE
     wallet
@@ -50,16 +44,23 @@ target_link_libraries(simplewallet
     ${EPEE_READLINE}
     qrcodegen
     version
-    ${Boost_CHRONO_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_LOCALE_LIBRARY}
+
+    Boost::chrono
+    Boost::program_options
+    Boost::filesystem
+    Boost::system
+    Boost::thread
+    Boost::serialization
+    Boost::locale
     ${ICU_LIBRARIES}
-    ${Boost_THREAD_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${GNU_READLINE_LIBRARY}
-    ${EXTRA_LIBRARIES})
+    ${GNU_READLINE_LIBRARY})
+
+target_include_directories(simplewallet
+        PRIVATE ${OPENSSL_INCLUDE_DIR})
+
 set_property(TARGET simplewallet
   PROPERTY
     OUTPUT_NAME "monero-wallet-cli")
-install(TARGETS simplewallet DESTINATION bin)
+
+

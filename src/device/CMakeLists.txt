@@ -26,57 +26,41 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(device_sources
-  device.cpp
-  device_default.cpp
-  log.cpp
-  )
+set(HEADERS
+    device.hpp
+    device_io.hpp
+    device_default.hpp
+    device_cold.hpp
+    log.hpp)
 
-if(HIDAPI_FOUND)
-  set(device_sources 
-    ${device_sources} 
-    device_ledger.cpp
-    device_io_hid.cpp
+add_library(device)
+target_sources(device
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/device.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/device_default.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/log.cpp
     )
-endif()
-
-set(device_headers
-  device.hpp
-  device_io.hpp
-  device_default.hpp
-  device_cold.hpp
-  log.hpp
- )
-
-if(HIDAPI_FOUND)
-  set(device_headers 
-    ${device_headers} 
-    device_ledger.hpp
-    device_io_hid.hpp
-    )
-endif()
-
-set(device_private_headers)
-
-
-monero_private_headers(device
-  ${device_private_headers})
-
-monero_add_library(device
-  ${device_sources}
-  ${device_headers}
-  ${device_private_headers})
 
 target_link_libraries(device
   PUBLIC
-    ${HIDAPI_LIBRARIES}
     cncrypto
     cryptonote_format_utils_basic
     ringct_basic
     wallet-crypto
-    ${OPENSSL_CRYPTO_LIBRARIES}
-    ${Boost_SERIALIZATION_LIBRARY}
+    monero-crypto-amd64-64-24k
+    OpenSSL::Crypto
+    Boost::serialization
   PRIVATE
     version
-    ${Blocks}
-    ${EXTRA_LIBRARIES})
+    blocks)
+
+target_include_directories(device
+        PUBLIC $<TARGET_PROPERTY:monero-crypto-amd64-64-24k,INTERFACE_INCLUDE_DIRECTORIES>
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        )
+
+monero_install_library(device
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/device/"
+        HEADERS "${HEADERS}")

@@ -57,4 +57,20 @@ foreach(BLOB_NAME checkpoints testnet_blocks stagenet_blocks)
     )
 endforeach()
 
-monero_add_library(blocks blocks.cpp ${GENERATED_SOURCES})
+add_library(blocks)
+target_sources(blocks
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/blocks.cpp
+        ${GENERATED_SOURCES}
+    )
+
+target_include_directories(blocks
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/contrib/epee/include>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        )
+
+monero_install_library(blocks
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/blocks/"
+        HEADERS blocks.h)

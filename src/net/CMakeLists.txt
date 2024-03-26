@@ -27,10 +27,40 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(net_sources dandelionpp.cpp error.cpp http.cpp i2p_address.cpp parse.cpp resolve.cpp
-    socks.cpp socks_connect.cpp tor_address.cpp zmq.cpp)
-monero_find_all_headers(net_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+SET(NET_HEADERS
+    dandelionpp.h
+    error.h
+    fwd.h
+    http.h
+    i2p_address.h
+    parse.h
+    resolve.h
+    socks_connect.h
+    socks.h
+    tor_address.h
+    zmq.h)
+file(GLOB NET_SOURCES *.cpp *.c *.cc)
 
-monero_add_library(net ${net_sources} ${net_headers})
-target_link_libraries(net common epee ${ZMQ_LIB} ${Boost_ASIO_LIBRARY})
+add_library(net)
+target_sources(net
+    PRIVATE
+        ${NET_SOURCES}
+    )
 
+target_link_libraries(net PUBLIC
+        common
+        epee
+        ${ZMQ_LIBRARIES}
+        Boost::system)
+
+target_include_directories(net
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        PRIVATE ${ZMQ_INCLUDE_DIRS}
+        PRIVATE ${OPENSSL_INCLUDE_DIR}
+        )
+
+monero_install_library(net
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/net/"
+        HEADERS ${NET_HEADERS})

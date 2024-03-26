@@ -38,9 +38,6 @@ set(blockchain_import_private_headers
   bootstrap_serialization.h
   )
 
-monero_private_headers(blockchain_import
-	  ${blockchain_import_private_headers})
-
 set(blockchain_export_sources
   blockchain_export.cpp
   bootstrap_file.cpp
@@ -53,9 +50,6 @@ set(blockchain_export_private_headers
   bootstrap_serialization.h
   )
 
-monero_private_headers(blockchain_export
-	  ${blockchain_export_private_headers})
-
 
 set(blockchain_blackball_sources
   blockchain_blackball.cpp
@@ -67,29 +61,17 @@ set(blockchain_blackball_private_headers
   bootstrap_serialization.h
   )
 
-monero_private_headers(blockchain_blackball
-	  ${blockchain_blackball_private_headers})
-
 set(blockchain_usage_sources
   blockchain_usage.cpp
   )
 
 set(blockchain_usage_private_headers)
 
-monero_private_headers(blockchain_usage
-	  ${blockchain_usage_private_headers})
-
-
-
 set(blockchain_prune_known_spent_data_sources
   blockchain_prune_known_spent_data.cpp
   )
 
 set(blockchain_prune_known_spent_data_private_headers)
-
-monero_private_headers(blockchain_prune_known_spent_data
-	  ${blockchain_prune_known_spent_data_private_headers})
-
 
 
 set(blockchain_prune_sources
@@ -98,20 +80,12 @@ set(blockchain_prune_sources
 
 set(blockchain_prune_private_headers)
 
-monero_private_headers(blockchain_prune
-	  ${blockchain_prune_private_headers})
-
-
 
 set(blockchain_ancestry_sources
   blockchain_ancestry.cpp
   )
 
 set(blockchain_ancestry_private_headers)
-
-monero_private_headers(blockchain_ancestry
-	  ${blockchain_ancestry_private_headers})
-
 
 
 set(blockchain_depth_sources
@@ -120,20 +94,13 @@ set(blockchain_depth_sources
 
 set(blockchain_depth_private_headers)
 
-monero_private_headers(blockchain_depth
-	  ${blockchain_depth_private_headers})
-
 set(blockchain_stats_sources
   blockchain_stats.cpp
   )
 
 set(blockchain_stats_private_headers)
 
-monero_private_headers(blockchain_stats
-	  ${blockchain_stats_private_headers})
-
-
-monero_add_executable(blockchain_import
+add_executable(blockchain_import
   ${blockchain_import_sources}
   ${blockchain_import_private_headers})
 
@@ -158,9 +125,9 @@ endif()
 set_property(TARGET blockchain_import
 	PROPERTY
 	OUTPUT_NAME "monero-blockchain-import")
-install(TARGETS blockchain_import DESTINATION bin)
+install(TARGETS blockchain_import DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-monero_add_executable(blockchain_export
+add_executable(blockchain_export
   ${blockchain_export_sources}
   ${blockchain_export_private_headers})
 
@@ -179,9 +146,9 @@ target_link_libraries(blockchain_export
 set_property(TARGET blockchain_export
 	PROPERTY
 	OUTPUT_NAME "monero-blockchain-export")
-install(TARGETS blockchain_export DESTINATION bin)
+install(TARGETS blockchain_export DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-monero_add_executable(blockchain_blackball
+add_executable(blockchain_blackball
   ${blockchain_blackball_sources}
   ${blockchain_blackball_private_headers})
 
@@ -201,10 +168,10 @@ target_link_libraries(blockchain_blackball
 set_property(TARGET blockchain_blackball
 	PROPERTY
 	OUTPUT_NAME "monero-blockchain-mark-spent-outputs")
-install(TARGETS blockchain_blackball DESTINATION bin)
+install(TARGETS blockchain_blackball DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 
-monero_add_executable(blockchain_usage
+add_executable(blockchain_usage
   ${blockchain_usage_sources}
   ${blockchain_usage_private_headers})
 
@@ -223,9 +190,9 @@ target_link_libraries(blockchain_usage
 set_property(TARGET blockchain_usage
 	PROPERTY
 	OUTPUT_NAME "monero-blockchain-usage")
-install(TARGETS blockchain_usage DESTINATION bin)
+install(TARGETS blockchain_usage DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-monero_add_executable(blockchain_ancestry
+add_executable(blockchain_ancestry
   ${blockchain_ancestry_sources}
   ${blockchain_ancestry_private_headers})
 
@@ -244,9 +211,9 @@ target_link_libraries(blockchain_ancestry
 set_property(TARGET blockchain_ancestry
 	PROPERTY
 	OUTPUT_NAME "monero-blockchain-ancestry")
-install(TARGETS blockchain_ancestry DESTINATION bin)
+install(TARGETS blockchain_ancestry DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-monero_add_executable(blockchain_depth
+add_executable(blockchain_depth
   ${blockchain_depth_sources}
   ${blockchain_depth_private_headers})
 
@@ -265,9 +232,9 @@ target_link_libraries(blockchain_depth
 set_property(TARGET blockchain_depth
 	PROPERTY
 	OUTPUT_NAME "monero-blockchain-depth")
-install(TARGETS blockchain_depth DESTINATION bin)
+install(TARGETS blockchain_depth DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-monero_add_executable(blockchain_stats
+add_executable(blockchain_stats
   ${blockchain_stats_sources}
   ${blockchain_stats_private_headers})
 
@@ -286,9 +253,9 @@ target_link_libraries(blockchain_stats
 set_property(TARGET blockchain_stats
 	PROPERTY
 	OUTPUT_NAME "monero-blockchain-stats")
-install(TARGETS blockchain_stats DESTINATION bin)
+install(TARGETS blockchain_stats DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-monero_add_executable(blockchain_prune_known_spent_data
+add_executable(blockchain_prune_known_spent_data
   ${blockchain_prune_known_spent_data_sources}
   ${blockchain_prune_known_spent_data_private_headers})
 
@@ -308,16 +275,16 @@ target_link_libraries(blockchain_prune_known_spent_data
 set_property(TARGET blockchain_prune_known_spent_data
 	PROPERTY
 	OUTPUT_NAME "monero-blockchain-prune-known-spent-data")
-install(TARGETS blockchain_prune_known_spent_data DESTINATION bin)
+install(TARGETS blockchain_prune_known_spent_data DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-monero_add_executable(blockchain_prune
+add_executable(blockchain_prune
   ${blockchain_prune_sources}
   ${blockchain_prune_private_headers})
 
 set_property(TARGET blockchain_prune
 	PROPERTY
 	OUTPUT_NAME "monero-blockchain-prune")
-install(TARGETS blockchain_prune DESTINATION bin)
+install(TARGETS blockchain_prune DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 target_link_libraries(blockchain_prune
   PRIVATE

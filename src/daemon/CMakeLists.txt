@@ -26,25 +26,14 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(daemon_sources
-  command_parser_executor.cpp
-  command_server.cpp
-  daemon.cpp
-  executor.cpp
-  main.cpp
-  rpc_command_executor.cpp
-)
+file(GLOB DAEMON_SOURCES
+    *.cpp
+    *.c
+    *.cc
+    *.h)
 
-set(daemon_headers)
+add_executable(daemon ${DAEMON_SOURCES})
 
-monero_find_all_headers(daemon_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
-
-monero_private_headers(daemon
-  ${daemon_private_headers})
-monero_add_executable(daemon
-  ${daemon_sources}
-  ${daemon_headers}
-  ${daemon_private_headers})
 target_link_libraries(daemon
   PRIVATE
     rpc
@@ -57,19 +46,27 @@ target_link_libraries(daemon
     daemonizer
     serialization
     daemon_rpc_server
-    ${EPEE_READLINE}
     version
-    ${Boost_CHRONO_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${Boost_REGEX_LIBRARY}
-    ${Boost_SYSTEM_LIBRARY}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${ZMQ_LIB}
-    ${GNU_READLINE_LIBRARY}
-    ${EXTRA_LIBRARIES}
-    ${Blocks})
+    Boost::chrono
+    Boost::program_options
+    Boost::filesystem
+    Boost::system
+    Boost::thread
+    Boost::regex
+    Threads::Threads
+    ${ZMQ_LIBRARIES}
+    blocks)
+
+target_include_directories(daemon
+        PRIVATE ${ZMQ_INCLUDE_DIRS}
+        PRIVATE ${OPENSSL_INCLUDE_DIR})
+
+if(PER_BLOCK_CHECKPOINT)
+  target_compile_definitions(daemon PUBLIC PER_BLOCK_CHECKPOINT=1)
+endif()
+
 set_property(TARGET daemon
   PROPERTY
     OUTPUT_NAME "monerod")
-install(TARGETS daemon DESTINATION bin)
+
+install(TARGETS daemon DESTINATION ${CMAKE_INSTALL_BINDIR})

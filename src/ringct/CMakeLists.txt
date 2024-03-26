@@ -27,50 +27,67 @@
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 set(ringct_basic_sources
-  rctOps.cpp
-  rctTypes.cpp
-  rctCryptoOps.c
-  multiexp.cc
-  bulletproofs.cc
-  bulletproofs_plus.cc)
+    rctOps.cpp
+    rctTypes.cpp
+    rctCryptoOps.c
+    multiexp.cc
+    bulletproofs.cc
+    bulletproofs_plus.cc)
 
-monero_find_all_headers(ringct_basic_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+set(ringct_basic_headers
+    rctOps.h
+    rctTypes.h
+    rctCryptoOps.h
+    multiexp.h
+    bulletproofs.h
+    bulletproofs_plus.h)
 
-monero_private_headers(ringct_basic
-  ${crypto_private_headers})
-monero_add_library(ringct_basic
-  ${ringct_basic_sources}
-  ${ringct_basic_private_headers})
+
+add_library(ringct_basic)
+target_sources(ringct_basic
+    PRIVATE
+        ${ringct_basic_sources}
+    )
+
 target_link_libraries(ringct_basic
   PUBLIC
     common
     cncrypto
-  PRIVATE
-    ${OPENSSL_LIBRARIES}
-    ${EXTRA_LIBRARIES})
+    OpenSSL::SSL
+    OpenSSL::Crypto)
 
-set(ringct_sources
-  rctSigs.cpp
-)
+target_include_directories(ringct_basic
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        PRIVATE ${OPENSSL_INCLUDE_DIR}
+        )
 
-set(ringct_headers)
+add_library(ringct)
+target_sources(ringct
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/rctSigs.cpp
+    )
 
-set(ringct_private_headers
-  rctSigs.h
-)
-
-monero_private_headers(ringct
-  ${crypto_private_headers})
-monero_add_library(ringct
-  ${ringct_sources}
-  ${ringct_headers}
-  ${ringct_private_headers})
 target_link_libraries(ringct
   PUBLIC
     common
     cncrypto
     cryptonote_basic
     device
-  PRIVATE
-    ${OPENSSL_LIBRARIES}
-    ${EXTRA_LIBRARIES})
+    OpenSSL::SSL)
+
+target_include_directories(ringct
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        PRIVATE ${OPENSSL_INCLUDE_DIR}
+        )
+
+monero_install_library(ringct_basic
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/ringct/"
+        HEADERS ${ringct_basic_headers})
+
+monero_install_library(ringct
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/ringct/"
+        HEADERS rctSigs.h)

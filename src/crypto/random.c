@@ -66,6 +66,7 @@ static void generate_system_random_bytes(size_t n, void *result) {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 static void generate_system_random_bytes(size_t n, void *result) {
   int fd;

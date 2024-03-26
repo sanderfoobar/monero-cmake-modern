@@ -26,25 +26,18 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(cryptonote_core_sources
-  blockchain.cpp
-  cryptonote_core.cpp
-  tx_pool.cpp
-  tx_sanity_check.cpp
-  cryptonote_tx_utils.cpp
-  tx_verification_utils.cpp
-)
+file(GLOB CN_CORE_SOURCES *.cpp *.c *.cc)
+set(CN_CORE_HEADERS
+  blockchain.h
+  blockchain_storage_boost_serialization.h
+  cryptonote_core.h
+  cryptonote_tx_utils.h
+  i_core_events.h
+  tx_pool.h
+  tx_sanity_check.h
+  tx_verification_utils.h)
 
-set(cryptonote_core_headers)
-
-monero_find_all_headers(cryptonote_core_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
-
-monero_private_headers(cryptonote_core
-  ${cryptonote_core_private_headers})
-monero_add_library(cryptonote_core
-  ${cryptonote_core_sources}
-  ${cryptonote_core_headers}
-  ${cryptonote_core_private_headers})
+add_library(cryptonote_core)
 target_link_libraries(cryptonote_core
   PUBLIC
     version
@@ -54,11 +47,34 @@ target_link_libraries(cryptonote_core
     ringct
     device
     hardforks
-    ${Boost_DATE_TIME_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${Boost_SERIALIZATION_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_SYSTEM_LIBRARY}
-    ${Boost_THREAD_LIBRARY}
-  PRIVATE
-    ${EXTRA_LIBRARIES})
+    Boost::date_time
+    Boost::program_options
+    Boost::serialization
+    Boost::filesystem
+    Boost::system
+    Boost::thread)
+
+target_include_directories(cryptonote_core PRIVATE
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        )
+
+if(PER_BLOCK_CHECKPOINT)
+  target_compile_definitions(cryptonote_core PUBLIC PER_BLOCK_CHECKPOINT=1)
+endif()
+
+target_sources(cryptonote_core
+    PRIVATE
+        ${CN_CORE_SOURCES}
+    )
+
+target_include_directories(cryptonote_core
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        )
+
+monero_install_library(cryptonote_core
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/cryptonote_core/"
+        HEADERS ${CN_CORE_HEADERS})

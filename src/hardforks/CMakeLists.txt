@@ -26,21 +26,14 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(hardforks_sources
-  hardforks.cpp)
+add_library(hardforks)
+target_sources(hardforks
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/hardforks.cpp
+    )
 
-monero_find_all_headers(hardforks_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(hardforks PUBLIC version)
 
-set(hardforks_private_headers)
-
-monero_private_headers(hardforks
-  ${hardforks_private_headers})
-monero_add_library(hardforks
-  ${hardforks_sources}
-  ${hardforks_headers}
-  ${hardforks_private_headers})
-target_link_libraries(hardforks
-  PUBLIC
-    version
-  PRIVATE
-    ${EXTRA_LIBRARIES})
+monero_install_library(hardforks
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/hardforks/"
+        HEADERS hardforks.h)

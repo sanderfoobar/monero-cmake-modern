@@ -26,26 +26,43 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# include (${PROJECT_SOURCE_DIR}/cmake/libutils.cmake)
-
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-
 set(wallet_sources
-  wallet2.cpp
-  wallet_args.cpp
-  ringdb.cpp
-  node_rpc_proxy.cpp
-  message_store.cpp
-  message_transporter.cpp
-)
+    wallet2.cpp
+    wallet_args.cpp
+    ringdb.cpp
+    node_rpc_proxy.cpp
+    message_store.cpp
+    message_transporter.cpp)
 
-monero_find_all_headers(wallet_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+set(wallet_headers
+    api/pending_transaction.h
+    api/wallet.h
+    api/wallet2_api.h
+    wallet2.h
+    api/address_book.h
+    api/common_defines.h
+    api/subaddress.h
+    api/subaddress_account.h
+    api/transaction_history.h
+    api/transaction_info.h
+    api/unsigned_transaction.h
+    api/wallet_manager.h
+    message_store.h
+    message_transporter.h
+    node_rpc_proxy.h
+    ringdb.h
+    wallet_args.h
+    wallet_errors.h
+    wallet_rpc_server.h
+    wallet_rpc_server_commands_defs.h
+    wallet_rpc_server_error_codes.h)
 
-monero_private_headers(wallet
-  ${wallet_private_headers})
-monero_add_library(wallet
-  ${wallet_sources}
-  ${wallet_private_headers})
+add_library(wallet ${wallet_sources})
+target_sources(wallet
+    PRIVATE
+        ${wallet_sources}
+    )
+
 target_link_libraries(wallet
   PUBLIC
     rpc_base
@@ -53,54 +70,63 @@ target_link_libraries(wallet
     common
     cryptonote_core
     mnemonics
-    device_trezor
     net
-    ${LMDB_LIBRARY}
-    ${Boost_CHRONO_LIBRARY}
-    ${Boost_SERIALIZATION_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_SYSTEM_LIBRARY}
-    ${Boost_THREAD_LIBRARY}
-    ${Boost_REGEX_LIBRARY}
+    lmdb
+    Boost::chrono
+    Boost::serialization
+    Boost::filesystem
+    Boost::system
+    Boost::thread
+    Boost::regex
+    OpenSSL::SSL)
+
+target_include_directories(wallet
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        PRIVATE ${OPENSSL_INCLUDE_DIR}
+        )
+
+monero_install_library(wallet
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/wallet/"
+        HEADERS "${wallet_headers}")
+
+# == rpc server
+
+add_executable(wallet_rpc_server wallet_rpc_server.cpp)
+target_link_libraries(wallet_rpc_server
   PRIVATE
-    ${EXTRA_LIBRARIES})
+    wallet
+    rpc_base
+    cryptonote_core
+    cncrypto
+    common
+    version
+    daemonizer
+    Boost::chrono
+    Boost::program_options
+    Boost::filesystem
+    Boost::thread
+    Threads::Threads
+    OpenSSL::SSL
+    OpenSSL::Crypto)
 
-if(NOT IOS)
-  set(wallet_rpc_sources
-    wallet_rpc_server.cpp)
+target_include_directories(wallet_rpc_server
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        PRIVATE ${OPENSSL_INCLUDE_DIR}
+        )
 
-  set(wallet_rpc_headers)
+set_property(TARGET wallet_rpc_server PROPERTY OUTPUT_NAME "monero-wallet-rpc")
 
-  set(wallet_rpc_private_headers
-    wallet_rpc_server.h)
-
-  monero_private_headers(wallet_rpc_server
-    ${wallet_rpc_private_headers})
-  monero_add_executable(wallet_rpc_server
-    ${wallet_rpc_sources}
-    ${wallet_rpc_headers}
-    ${wallet_rpc_private_headers})
-
-  target_link_libraries(wallet_rpc_server
-    PRIVATE
-      wallet
-      rpc_base
-      cryptonote_core
-      cncrypto
-      common
-      version
-      daemonizer
-      ${EPEE_READLINE}
-      ${Boost_CHRONO_LIBRARY}
-      ${Boost_PROGRAM_OPTIONS_LIBRARY}
-      ${Boost_FILESYSTEM_LIBRARY}
-      ${Boost_THREAD_LIBRARY}
-      ${CMAKE_THREAD_LIBS_INIT}
-      ${EXTRA_LIBRARIES})
-  set_property(TARGET wallet_rpc_server
-    PROPERTY
-      OUTPUT_NAME "monero-wallet-rpc")
-  install(TARGETS wallet_rpc_server DESTINATION bin)
-endif()
+install(TARGETS wallet_rpc_server
+    EXPORT walletRpcServerTargets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/monero/
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/monero/
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/monero/
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/monero/
+    )
 
 add_subdirectory(api)

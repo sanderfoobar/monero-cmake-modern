@@ -1,8 +1,16 @@
-project(libqrcodegen)
+add_library(qrcodegen)
 
-add_library(qrcodegen STATIC QrCode.cpp)
-set_target_properties(qrcodegen PROPERTIES POSITION_INDEPENDENT_CODE ON)
-set_target_properties(qrcodegen PROPERTIES CXX_STANDARD 11)
+target_sources(qrcodegen
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/QrCode.cpp
+    )
 
-target_include_directories(qrcodegen PUBLIC 
-    ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(qrcodegen
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        )
+
+monero_install_library(qrcodegen
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/qrcodegen/"
+        HEADERS QrCode.hpp)

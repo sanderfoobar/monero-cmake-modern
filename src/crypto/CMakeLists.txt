@@ -27,77 +27,102 @@
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 set(crypto_sources
-  aesb.c
-  blake256.c
-  chacha.c
-  crypto-ops-data.c
-  crypto-ops.c
-  crypto.cpp
-  generators.cpp
-  groestl.c
-  hash-extra-blake.c
-  hash-extra-groestl.c
-  hash-extra-jh.c
-  hash-extra-skein.c
-  hash.c
-  hmac-keccak.c
-  jh.c
-  keccak.c
-  oaes_lib.c
-  random.c
-  skein.c
-  slow-hash.c
-  rx-slow-hash.c
-  CryptonightR_JIT.c
-  tree-hash.c)
+    aesb.c
+    blake256.c
+    chacha.c
+    crypto-ops-data.c
+    crypto-ops.c
+    crypto.cpp
+    groestl.c
+    hash-extra-blake.c
+    hash-extra-groestl.c
+    hash-extra-jh.c
+    hash-extra-skein.c
+    hash.c
+    hmac-keccak.c
+    jh.c
+    keccak.c
+    oaes_lib.c
+    random.c
+    skein.c
+    slow-hash.c
+    rx-slow-hash.c
+    CryptonightR_JIT.c
+    tree-hash.c)
 
-if(ARCH_ID STREQUAL "i386" OR ARCH_ID STREQUAL "x86_64" OR ARCH_ID STREQUAL "x86-64" OR ARCH_ID STREQUAL "amd64")
-list(APPEND crypto_sources CryptonightR_template.S)
+set(crypto_headers
+    CryptonightR_JIT.h
+    CryptonightR_template.h
+    blake256.h
+    c_threads.h
+    chacha.h
+    crypto-ops.h
+    crypto.h
+    duration.h
+    generic-ops.h
+    groestl.h
+    groestl_tables.h
+    hash-ops.h
+    hash.h
+    hmac-keccak.h
+    initializer.h
+    jh.h
+    keccak.h
+    oaes_config.h
+    oaes_lib.h
+    random.h
+    skein.h
+    skein_port.h
+    variant2_int_sqrt.h
+    variant4_random_math.h)
+
+if(NOT ARM)
+  list(APPEND crypto_sources CryptonightR_template.S)
 endif()
 
-include_directories(${RANDOMX_INCLUDE})
+add_library(cncrypto)
+target_sources(cncrypto
+    PRIVATE
+        ${crypto_sources}
+    )
 
-set(crypto_headers)
-
-monero_find_all_headers(crypto_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
-
-monero_private_headers(cncrypto
-  ${crypto_private_headers})
-monero_add_library(cncrypto
-  ${crypto_sources}
-  ${crypto_headers}
-  ${crypto_private_headers})
 target_link_libraries(cncrypto
   PUBLIC
     epee
     randomx
-    ${Boost_SYSTEM_LIBRARY}
-    ${sodium_LIBRARIES}
-  PRIVATE
-    ${EXTRA_LIBRARIES})
+    Boost::system
+    ${sodium_LIBRARY_RELEASE}
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    ${CMAKE_DL_LIBS})
 
-if (ARM)
-  option(NO_OPTIMIZED_MULTIPLY_ON_ARM
-	   "Compute multiply using generic C implementation instead of ARM ASM" OFF)
-  if(NO_OPTIMIZED_MULTIPLY_ON_ARM)
-    message(STATUS "Using generic C implementation for multiply")
-    set_property(SOURCE slow-hash.c
-      PROPERTY COMPILE_DEFINITIONS "NO_OPTIMIZED_MULTIPLY_ON_ARM")
-  endif()
+target_include_directories(cncrypto
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        PUBLIC ${sodium_INCLUDE_DIR}
+        )
+
+if (ARM AND NO_OPTIMIZED_MULTIPLY_ON_ARM)
+  message(STATUS "Using generic C implementation for multiply")
+  set_property(SOURCE slow-hash.c
+    PROPERTY COMPILE_DEFINITIONS "NO_OPTIMIZED_MULTIPLY_ON_ARM")
 endif()
 
 # Because of the way Qt works on android with JNI, the code does not live in the main android thread
-# So this code runs with a 1 MB default stack size. 
+# So this code runs with a 1 MB default stack size.
 # This will force the use of the heap for the allocation of the scratchpad
 if (ANDROID OR IOS)
-  if( BUILD_GUI_DEPS )
     add_definitions(-DFORCE_USE_HEAP=1)
-  endif()
 endif()
 
 # cheat because cmake and ccache hate each other
-set_property(SOURCE CryptonightR_template.S PROPERTY LANGUAGE C)
+set_property(SOURCE CryptonightR_template.S PROPERTY LANGUAGE ASM)
 set_property(SOURCE CryptonightR_template.S PROPERTY XCODE_EXPLICIT_FILE_TYPE sourcecode.asm)
 
 # Must be done last, because it references libraries in this directory
 add_subdirectory(wallet)
+
+monero_install_library(cncrypto
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/crypto/"
+        HEADERS ${crypto_headers})

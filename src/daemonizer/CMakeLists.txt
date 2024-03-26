@@ -58,17 +58,16 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-DDEBUG_TMPDIR_LOG=1)
 endif()
 
-monero_private_headers(daemonizer
-  ${daemonizer_private_headers})
-monero_add_library(daemonizer
+add_library(daemonizer
   ${daemonizer_sources}
   ${daemonizer_headers}
   ${daemonizer_private_headers})
+
 target_link_libraries(daemonizer
   PUBLIC
     common
-    ${Boost_CHRONO_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-  PRIVATE
-    ${EXTRA_LIBRARIES})
+    Boost::chrono
+    Boost::filesystem
+    Boost::program_options)
+
+target_include_directories(daemonizer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../)

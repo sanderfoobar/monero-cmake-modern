@@ -27,37 +27,19 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#
-# Possibly user defined values.
-#
-set(MONERO_WALLET_CRYPTO_LIBRARY "auto" CACHE STRING "Select a wallet crypto library")
+include(CheckLanguage)
+check_language(ASM-ATT)
 
-#
-# If the user specified "auto", detect best library defaulting to internal.
-#
-if (${MONERO_WALLET_CRYPTO_LIBRARY} STREQUAL "auto")
-   monero_crypto_autodetect(AVAILABLE BEST)
-  if (DEFINED BEST)
-    message("Wallet crypto is using ${BEST} backend")
-    set(MONERO_WALLET_CRYPTO_LIBRARY ${BEST})
-  else ()
-    message("Defaulting to internal crypto library for wallet")
-    set(MONERO_WALLET_CRYPTO_LIBRARY "cn")
-  endif ()
-endif ()
+add_library(wallet-crypto crypto.h)
 
-#
-# Configure library target "wallet-crypto" - clients will use this as a
-# library dependency which in turn will depend on the crypto library selected.
-#
-if (${MONERO_WALLET_CRYPTO_LIBRARY} STREQUAL "cn")
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/empty.h.in ${MONERO_GENERATED_HEADERS_DIR}/crypto/wallet/ops.h)
-  add_library(wallet-crypto ALIAS cncrypto)
-else ()
-  monero_crypto_generate_header(${MONERO_WALLET_CRYPTO_LIBRARY} "${MONERO_GENERATED_HEADERS_DIR}/crypto/wallet/ops.h")
-  monero_crypto_get_target(${MONERO_WALLET_CRYPTO_LIBRARY} CRYPTO_TARGET)
-  add_library(wallet-crypto $<TARGET_OBJECTS:${CRYPTO_TARGET}>)
-  target_link_libraries(wallet-crypto cncrypto)
-endif ()
+target_include_directories(wallet-crypto
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/generated_include>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        )
 
+target_link_libraries(wallet-crypto PUBLIC cncrypto)
 
+monero_install_library(wallet-crypto
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/wallet-crypto/"
+        HEADERS crypto.h)

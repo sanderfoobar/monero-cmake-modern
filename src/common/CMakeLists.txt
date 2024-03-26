@@ -26,64 +26,74 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+file(GLOB COMMON_SOURCES "*.cpp" "*.c")
+set(COMMON_HEADERS
+    aligned.h
+    apply_permutation.h
+    base58.h
+    combinator.h
+    command_line.h
+    common_fwd.h
+    data_cache.h
+    dns_utils.h
+    download.h
+    error.h
+    expect.h
+    http_connection.h
+    i18n.h
+    json_util.h
+    notify.h
+    password.h
+    perf_timer.h
+    pod-class.h
+    powerof.h
+    pruning.h
+    rpc_client.h
+    scoped_message_writer.h
+    sfinae_helpers.h
+    spawn.h
+    stack_trace.h
+    threadpool.h
+    timings.h
+    unordered_containers_boost_serialization.h
+    updates.h
+    utf8.h
+    util.h
+    varint.h)
 
-set(common_sources
-  base58.cpp
-  command_line.cpp
-  dns_utils.cpp
-  download.cpp
-  error.cpp
-  expect.cpp
-  util.cpp
-  i18n.cpp
-  notify.cpp
-  password.cpp
-  perf_timer.cpp
-  pruning.cpp
-  spawn.cpp
-  threadpool.cpp
-  updates.cpp
-  aligned.c
-  timings.cc
-  combinator.cpp)
+add_library(common)
+target_sources(common
+    PRIVATE
+        ${COMMON_SOURCES}
+    )
 
-if (STACK_TRACE)
-  list(APPEND common_sources stack_trace.cpp)
-endif()
-
-if (BACKCOMPAT)
-  list(APPEND common_sources compat/glibc_compat.cpp)
-endif()
-
-set(common_headers)
-
-monero_find_all_headers(common_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
-
-monero_private_headers(common
-  ${common_private_headers})
-monero_add_library(common
-  ${common_sources}
-  ${common_headers}
-  ${common_private_headers}
-  DEPENDS generate_translations_header)
 target_link_libraries(common
   PUBLIC
     cncrypto
-    ${UNBOUND_LIBRARIES}
-    ${LIBUNWIND_LIBRARIES}
-    ${Boost_DATE_TIME_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_SYSTEM_LIBRARY}
-    ${Boost_THREAD_LIBRARY}
-    ${Boost_REGEX_LIBRARY}
-    ${Boost_CHRONO_LIBRARY}
-  PRIVATE
-    ${OPENSSL_LIBRARIES}
-    ${EXTRA_LIBRARIES})
-target_include_directories(common
-  PRIVATE
-    ${Boost_INCLUDE_DIRS})
+    easylogging
+    Boost::chrono
+    Boost::date_time
+    Boost::filesystem
+    Boost::thread
+    Boost::regex
+    Boost::system
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    Libunbound::Libunbound)
 
-#monero_install_headers(common
-#  ${common_headers})
+target_include_directories(common
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/translations>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        )
+
+if(STATIC)
+    target_compile_definitions(common PUBLIC STATICLIB=1)
+endif()
+
+add_dependencies(common generate_translations_header)
+
+monero_install_library(common
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/common/"
+        HEADERS ${COMMON_HEADERS})

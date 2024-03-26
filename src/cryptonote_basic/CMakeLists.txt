@@ -26,56 +26,68 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-if(APPLE)
-  if(DEPENDS)
-    list(APPEND EXTRA_LIBRARIES "-framework Foundation -framework ApplicationServices -framework AppKit -framework IOKit")
-  else()
-    find_library(IOKIT_LIBRARY IOKit)
-    mark_as_advanced(IOKIT_LIBRARY)
-    list(APPEND EXTRA_LIBRARIES ${IOKIT_LIBRARY})
-  endif()
-endif()
+file(GLOB CN_BASIC_SOURCES *.cpp *.c *.cc)
+set(CN_BASIC_HEADERS
+    account.h
+    account_boost_serialization.h
+    blobdatatype.h
+    connection_context.h
+    cryptonote_basic.h
+    cryptonote_basic_impl.h
+    cryptonote_boost_serialization.h
+    cryptonote_format_utils.h
+    difficulty.h
+    events.h
+    fwd.h
+    hardfork.h
+    merge_mining.h
+    miner.h
+    subaddress_index.h
+    tx_extra.h
+    verification_context.h)
 
-monero_add_library(cryptonote_format_utils_basic
-  cryptonote_format_utils_basic.cpp
-)
-target_link_libraries(cryptonote_format_utils_basic
-  PUBLIC
-  cncrypto
-)
+# cryptonote_format_utils_basic
+add_library(cryptonote_format_utils_basic)
+target_sources(cryptonote_format_utils_basic
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/cryptonote_format_utils_basic.cpp
+    )
 
-set(cryptonote_basic_sources
-  account.cpp
-  connection_context.cpp
-  cryptonote_basic_impl.cpp
-  cryptonote_format_utils.cpp
-  difficulty.cpp
-  hardfork.cpp
-  merge_mining.cpp
-  miner.cpp)
+target_link_libraries(cryptonote_format_utils_basic PUBLIC cncrypto)
+target_include_directories(cryptonote_format_utils_basic
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        )
 
-set(cryptonote_basic_headers)
+# cryptonote_basic
+add_library(cryptonote_basic)
+target_sources(cryptonote_basic
+    PRIVATE
+        ${CN_BASIC_SOURCES}
+    )
 
-monero_find_all_headers(cryptonote_basic_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
-
-monero_private_headers(cryptonote_basic
-  ${cryptonote_basic_private_headers})
-monero_add_library(cryptonote_basic
-  ${cryptonote_basic_sources}
-  ${cryptonote_basic_headers}
-  ${cryptonote_basic_private_headers})
 target_link_libraries(cryptonote_basic
   PUBLIC
     common
     cncrypto
     checkpoints
-    cryptonote_format_utils_basic
     device
-    ${Boost_DATE_TIME_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${Boost_SERIALIZATION_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_SYSTEM_LIBRARY}
-    ${Boost_THREAD_LIBRARY}
-  PRIVATE
-    ${EXTRA_LIBRARIES})
+    Boost::date_time
+    Boost::program_options
+    Boost::serialization
+    Boost::filesystem
+    Boost::system
+    Boost::thread)
+
+target_include_directories(cryptonote_basic
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/>
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/monero/cryptonote_basic>
+        )
+
+monero_install_library(cryptonote_format_utils_basic)
+monero_install_library(cryptonote_basic
+        INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/monero/cryptonote_basic/"
+        HEADERS ${CN_BASIC_HEADERS})
